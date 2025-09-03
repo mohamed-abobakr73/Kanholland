@@ -2,33 +2,34 @@ import prisma from "../config/prismaClient.js";
 
 export const createSection = async (data, files = []) => {
   return await prisma.$transaction(async (tx) => {
-    // 1. Create the section with background only
+    const { pageId, title, content, backgroundImage } = data;
+
     const lastSection = await prisma.section.findFirst({
-      where: { pageId: data.pageId },
+      where: { pageId },
       orderBy: { orderIndex: "desc" },
     });
 
-    // 2. Calculate next orderIndex
     const nextOrderIndex = lastSection ? lastSection.orderIndex + 1 : 1;
 
     const section = await tx.section.create({
       data: {
         pageId: data.pageId,
-        title: data.title,
-        content: data.content,
-        backgroundImage: data.backgroundImage || null, // keep separate
-        backgroundVideo: data.backgroundVideo || null,
-        orderIndex: nextOrderIndex || 0,
+        title,
+        content,
+        orderIndex: nextOrderIndex,
       },
     });
 
-    // 2. Handle media[] (multiple uploads)
+    await tx.background_Image.create({
+      data: { ...backgroundImage },
+    });
+
     if (files.length > 0) {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const fileName = file.filename;
 
-        const media = await tx.media.create({
+        await tx.media.create({
           data: {
             fileUrl: `/uploads/${fileName}`,
             fileName,
@@ -37,24 +38,14 @@ export const createSection = async (data, files = []) => {
             uploadedAt: new Date(),
           },
         });
-
-        await tx.sectionMedia.create({
-          data: {
-            sectionId: section.id,
-            mediaId: media.id,
-            orderIndex: i,
-          },
-        });
       }
     }
 
-    // 3. Return with media included
     return await tx.section.findUnique({
       where: { id: section.id },
       include: {
-        media: {
-          include: { media: true },
-        },
+        media: true,
+        backgroundImage: true,
       },
     });
   });
@@ -62,14 +53,14 @@ export const createSection = async (data, files = []) => {
 
 export const getSections = async () => {
   return await prisma.section.findMany({
-    include: { media: {include: {media: true}}, page: true },
+    include: { media: { include: { media: true } }, page: true },
   });
 };
 
 export const getSectionById = async (id) => {
   return await prisma.section.findUnique({
     where: { id },
-    include: { media: {include: {media: true}}, page: true },
+    include: { media: { include: { media: true } }, page: true },
   });
 };
 
