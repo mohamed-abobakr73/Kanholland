@@ -1,0 +1,228 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// -------------------- Enums --------------------
+enum Role {
+  SUPER_ADMIN
+  USER
+}
+
+enum BackgroundImageEntityType {
+  PAGE
+  SECTION
+}
+
+enum MediaEntityType {
+  PAGE
+  SECTION
+  DOG
+  COURSE
+}
+
+enum CourseStatus {
+  Active
+  Inactive
+  Draft
+  Premium
+}
+
+// -------------------- Core Auth Models --------------------
+model User {
+  id           String           @id @default(uuid())
+  email        String           @unique
+  username     String           @unique
+  passwordHash String
+  role         Role             @default(USER)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  refreshTokens RefreshToken[]
+
+  // authored/updated content (optional string mapping kept on entities for simplicity)
+  // createdPages  Page[]     @relation("PageCreatedBy")
+  // updatedPages  Page[]     @relation("PageUpdatedBy")
+  passwordResetTokens PasswordResetToken[]
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  email     String
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([expiresAt])
+}
+
+// -------------------- Media --------------------
+model Media {
+  id         Int       @id @default(autoincrement())
+  fileName   String
+  fileUrl    String      // absolute or relative URL
+  mimeType   String
+  fileSize   Int?
+  uploadedAt DateTime    @default(now())
+  uploadedBy String?
+
+  entityType MediaEntityType
+  entityId Int
+
+  @@unique([entityType, entityId])
+  @@index([entityId])
+}
+
+model Background_Image {
+  id Int @id @default(autoincrement())
+  fileUrl String
+  fileName String
+  mimeType String
+  fileSize Int?
+
+  entityType BackgroundImageEntityType
+  entityId Int
+  
+  @@unique([entityType, entityId])
+}
+
+// -------------------- Pages / Sections --------------------
+model Page {
+  id                 Int       @id @default(autoincrement())
+  slug               String    @unique
+  title              String
+  description        String
+  backgroundVideoUrl String?
+
+  createdBy   String?
+  updatedBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Optional FK authorship (not exposed in Swagger but handy internally)
+  // createdById String?
+  // createdUser User?     @relation("PageCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  // updatedById String?
+  // updatedUser User?     @relation("PageUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  // Relations
+  sections         Section[]
+}
+
+
+model Section {
+  id              Int       @id @default(autoincrement())
+  pageId          Int
+  page            Page      @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  title           String?
+  content         Json?
+  backgroundVideo String?
+  orderIndex      Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+
+  @@unique([pageId, orderIndex])
+  @@index([pageId])
+}
+
+// -------------------- Dogs & Training Programs --------------------
+model Dog {
+  id               Int       @id @default(autoincrement())
+  name             String
+  breed            String
+  age              Int?
+  trainingLevel    Int?
+  certifications   String?
+  specialization   String?
+  isAvailable      Boolean   @default(true)
+  updatedBy        String?
+
+  profileImageId Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  media            DogMedia[]
+  trainingPrograms DogTrainingProgram[]
+}
+
+model TrainingProgram {
+  id              Int     @id @default(autoincrement())
+  programName     String
+  description     String?
+  difficultyLevel Int?
+  duration        String?
+  status          String? // keep string to match Swagger (Active/Inactive/etc.)
+
+  dogs DogTrainingProgram[]
+}
+
+model DogTrainingProgram {
+  id               Int @id @default(autoincrement())
+  dogId            Int
+  trainingProgramId Int
+
+  dog  Dog             @relation(fields: [dogId], references: [id], onDelete: Cascade)
+  prog TrainingProgram @relation(fields: [trainingProgramId], references: [id], onDelete: Cascade)
+
+  @@unique([dogId, trainingProgramId])
+  @@index([dogId])
+  @@index([trainingProgramId])
+}
+
+model DogMedia {
+  id      Int   @id @default(autoincrement())
+  dogId   Int
+  mediaId Int
+
+  dog   Dog   @relation(fields: [dogId], references: [id], onDelete: Cascade)
+
+  @@unique([dogId, mediaId])
+  @@index([dogId])
+  @@index([mediaId])
+}
+
+// -------------------- Courses --------------------
+model Course {
+  id               Int          @id @default(autoincrement())
+  title            String
+  description      String
+  topics           String?
+  learningOutcomes String?
+  prerequisites    String?
+  duration         String?
+  difficultyLevel  Int?
+  maxParticipants  Int?
+  price            Float?
+  isAvailable      Boolean      @default(true)
+  status           CourseStatus @default(Active)
+
+  createdBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+}
