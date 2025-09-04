@@ -2,39 +2,15 @@ import * as pageService from "../services/pagesService.js";
 
 export async function createPageHandler(req, res, next) {
   try {
-    const userId = req.user?.id || 1; // replace with real auth later
+    const userId = req.user?.id || 1;
 
-    const body = req.body;
+    const data = req.body;
 
-    // Background images
-    let backgroundImages = [];
-    if (req.files?.backgroundImages) {
-      backgroundImages = req.files.backgroundImages.map((file, idx) => ({
-        imageUrl: `/uploads/${file.filename}`,
-        orderIndex: idx,
-      }));
+    if (req.file) {
+      data.backgroundImage = req.file;
     }
 
-    // Section media (map to first section for now, you can expand logic)
-    let sections = [];
-    if (body.sections) {
-      sections = JSON.parse(body.sections).map((section, idx) => ({
-        ...section,
-        orderIndex: idx,
-        media: req.files?.sectionMedia
-          ? req.files.sectionMedia.map((file) => ({
-              fileName: file.originalname,
-              fileUrl: `/uploads/${file.filename}`,
-              fileType: file.mimetype,
-            }))
-          : [],
-      }));
-    }
-
-    const page = await pageService.createPage(
-      { ...body, backgroundImages, sections },
-      userId
-    );
+    const page = await pageService.createPage(data, userId);
 
     res.status(201).json(page);
   } catch (err) {
@@ -63,12 +39,14 @@ export async function getAllPagesHandler(req, res, next) {
 
 export async function updatePageHandler(req, res, next) {
   try {
-    const userId = req.user.id;
-    const page = await pageService.updatePage(
-      Number(req.params.id),
-      req.body,
-      userId
-    );
+    // const userId = req.user.id;
+    const data = req.body
+    if (req.file) {
+      data.backgroundImage = req.file;
+    }
+
+    const page = await pageService.updatePage(Number(req.params.id), data, 1);
+
     res.json(page);
   } catch (err) {
     next(err);

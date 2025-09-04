@@ -7,7 +7,7 @@ import {
   deletePageHandler,
 } from "../controllers/pagesController.js";
 import { validateRequestBody } from "../middlewares/validateRequestBody.js";
-import { createPageSchema, updatePageSchema } from "../schemas/pagesSchema.js";
+import { createPageSchema } from "../schemas/pagesSchema.js";
 import { upload } from "../config/multer.js";
 import verifyToken from "../middlewares/verifyToken.js";
 
@@ -17,10 +17,7 @@ const pagesRoute = express.Router();
 pagesRoute.post(
   "/",
   // verifyToken,
-  upload.fields([
-    { name: "backgroundImages", maxCount: 5 },
-    { name: "sectionMedia", maxCount: 20 },
-  ]),
+  upload.single("backgroundImage"),
   validateRequestBody(createPageSchema),
   createPageHandler
 );
@@ -30,11 +27,8 @@ pagesRoute.get("/:id", getPageHandler);
 
 pagesRoute.put(
   "/:id",
-  upload.fields([
-    { name: "backgroundImages", maxCount: 5 },
-    { name: "sectionMedia", maxCount: 20 },
-  ]),
-  validateRequestBody(updatePageSchema),
+  upload.single("backgroundImage"),
+  // validateRequestBody(updatePageSchema),
   updatePageHandler
 );
 

@@ -21,6 +21,9 @@ export const createSectionHandler = async (req, res, next) => {
       data.backgroundVideo = `/uploads/${req.files.backgroundVideo[0].filename}`;
     }
 
+    console.log(req.files?.backgroundImage);
+    console.log(data.backgroundImage);
+
     const mediaFiles = req.files?.media || [];
 
     const payload = {

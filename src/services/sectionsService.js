@@ -1,3 +1,4 @@
+import { file } from "zod";
 import prisma from "../config/prismaClient.js";
 
 export const createSection = async (data, files = []) => {
@@ -20,9 +21,11 @@ export const createSection = async (data, files = []) => {
       },
     });
 
-    await tx.background_Image.create({
-      data: { ...backgroundImage },
-    });
+    if (backgroundImage) {
+      await tx.background_Image.create({
+        data: { ...backgroundImage },
+      });
+    }
 
     if (files.length > 0) {
       for (let i = 0; i < files.length; i++) {
@@ -66,48 +69,25 @@ export const getSectionById = async (id) => {
 
 export const updateSection = async (id, data, mediaFiles = []) => {
   return await prisma.$transaction(async (tx) => {
-    // Update section itself
     const section = await tx.section.update({
       where: { id },
       data: {
         title: data.title,
         content: data.content,
-        backgroundImage: data.backgroundImage,
         backgroundVideo: data.backgroundVideo,
         orderIndex: data.orderIndex ?? 0,
         updatedAt: new Date(),
       },
     });
 
-    // Handle media files (array of objects)
-    if (mediaFiles.length > 0) {
-      // 🔥 remove old media links
-      await tx.sectionMedia.deleteMany({
-        where: { sectionId: section.id },
+    if (data.backgroundImage) {
+      await tx.background_Image.deleteMany({ where: { sectionId: id } });
+      await tx.background_Image.create({
+        data: { ...data.backgroundImage },
       });
+    }
 
-      // Create new media entries
-      for (let i = 0; i < mediaFiles.length; i++) {
-        const file = mediaFiles[i];
-        const media = await tx.media.create({
-          data: {
-            fileUrl: `/uploads/${file.filename}`,
-            fileName: file.filename,
-            mimeType: file.mimetype,
-            fileSize: file.size ?? null,
-            uploadedAt: new Date(),
-          },
-        });
-
-        // Link section ↔ media
-        await tx.sectionMedia.create({
-          data: {
-            sectionId: section.id,
-            mediaId: media.id,
-            orderIndex: i,
-          },
-        });
-      }
+    if (mediaFiles.length > 0) {
     }
 
     // Return with relations
