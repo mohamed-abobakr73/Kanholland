@@ -1,39 +1,32 @@
-import prisma from "../config/prismaClient.js"; // your prisma client wrapper
+import prisma from "../config/prismaClient.js";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+import AppError from "../utils/AppError.js";
+import httpStatusText from "../utils/httpStatusText.js";
+import { configDotenv } from "dotenv";
+import generateJwt from "../utils/jwtUtils/generateJwt.js";
 
-const JWT_SECRET = process.env.JWT_SECRET || "supersecret";
-const JWT_EXPIRES_IN = "15m";
-const REFRESH_EXPIRES_IN = "7d";
+configDotenv();
 
-export async function loginUser(email, password) {
+export const loginUser = async (email, password) => {
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
-    throw new Error("Invalid email or password");
+    throw new AppError("Invalid email or password", 401, httpStatusText.FAIL);
   }
 
   const valid = await bcrypt.compare(password, user.passwordHash);
   if (!valid) {
-    throw new Error("Invalid email or password");
+    throw new AppError("Invalid email or password", 401, httpStatusText.FAIL);
   }
 
-  const token = jwt.sign(
-    { userId: user.id, email: user.email, role: user.role },
-    JWT_SECRET,
-    { expiresIn: JWT_EXPIRES_IN }
-  );
+  const tokenPayload = {
+    userId: user.id,
+    email: user.email,
+    username: user.username,
+  };
 
-  const refreshToken = jwt.sign({ sub: user.id }, JWT_SECRET, {
-    expiresIn: REFRESH_EXPIRES_IN,
-  });
+  const token = generateJwt("access", tokenPayload);
 
-  await prisma.refreshToken.create({
-    data: {
-      token: refreshToken,
-      userId: user.id,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-    },
-  });
+  const refreshToken = generateJwt("refresh", tokenPayload);
 
   return {
     token,
@@ -43,4 +36,4 @@ export async function loginUser(email, password) {
       Date.now() + 7 * 24 * 60 * 60 * 1000
     ).toISOString(),
   };
-}
+};
