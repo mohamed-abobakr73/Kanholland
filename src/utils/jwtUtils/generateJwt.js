@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 configDotenv();
 
 const generateJwt = (tokenType, payload) => {
-  const JWT_KEY = "";
+  let JWT_KEY = "";
   let expiresIn = "";
 
   if (tokenType === "access") {
