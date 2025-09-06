@@ -5,7 +5,6 @@ import { loginSchema } from "../schemas/loginSchema.js";
 
 const router = Router();
 
-// POST /api/auth/login
 router.post("/login", validateRequestBody(loginSchema), loginHandler);
 
 export default router;
