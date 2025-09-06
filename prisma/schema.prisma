@@ -88,11 +88,11 @@ model Media {
   uploadedAt DateTime    @default(now())
   uploadedBy String?
 
-  entityType MediaEntityType
-  entityId Int
+  pageId Int? 
+  page   Page? @relation(fields: [pageId], references: [id])
 
-  @@unique([entityType, entityId])
-  @@index([entityId])
+  sectionId Int?
+  section   Section? @relation(fields: [sectionId], references: [id])
 }
 
 model Background_Image {
@@ -102,10 +102,11 @@ model Background_Image {
   mimeType String
   fileSize Int?
 
-  entityType BackgroundImageEntityType
-  entityId Int
-  
-  @@unique([entityType, entityId])
+  pageId Int? @unique()
+  page   Page? @relation(fields: [pageId], references: [id])
+
+  sectionId Int? @unique()
+  section   Section? @relation(fields: [sectionId], references: [id])
 }
 
 // -------------------- Pages / Sections --------------------
@@ -128,7 +129,9 @@ model Page {
   // updatedUser User?     @relation("PageUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
 
   // Relations
+  backgroundImage  Background_Image?
   sections         Section[]
+  media            Media[]
 }
 
 
@@ -144,7 +147,8 @@ model Section {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-
+  backgroundImage   Background_Image?
+  media             Media[]
   @@unique([pageId, orderIndex])
   @@index([pageId])
 }

@@ -37,14 +37,16 @@ async function initializeApp() {
   }
 }
 
-app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
+app.use("/api/uploads", express.static(path.join(__dirname, "../uploads")));
 
 // Routes
 app.use("/api/auth", authRoute);
 app.use("/api/pages", pagesRoute);
 app.use("/api/sections", sectionsRoute);
 
-app.get("/health", (req, res) => res.status(200).json({ message: "Healthy" }));
+app.get("/api/health", (req, res) =>
+  res.status(200).json({ message: "Healthy" })
+);
 
 // Error handler
 app.use(globalErrorHandler);

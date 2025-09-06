@@ -15,21 +15,17 @@ export const createSectionHandler = async (req, res, next) => {
     }
 
     if (req.files?.backgroundImage) {
-      data.backgroundImage = `/uploads/${req.files.backgroundImage[0].filename}`;
+      data.backgroundImage = req.files.backgroundImage[0];
     }
     if (req.files?.backgroundVideo) {
-      data.backgroundVideo = `/uploads/${req.files.backgroundVideo[0].filename}`;
+      data.backgroundVideo = req.files.backgroundVideo[0];
     }
-
-    console.log(req.files?.backgroundImage);
-    console.log(data.backgroundImage);
 
     const mediaFiles = req.files?.media || [];
 
     const payload = {
       ...data,
       pageId: Number(req.body.pageId),
-      orderIndex: req.body.orderIndex ? Number(req.body.orderIndex) : 0,
     };
 
     const section = await sectionService.createSection(payload, mediaFiles);
@@ -71,20 +67,27 @@ export const updateSectionHandler = async (req, res, next) => {
   try {
     const data = req.body;
 
-    // Backgrounds
-    if (req.files?.backgroundImage) {
-      data.backgroundImage = `/uploads/${req.files.backgroundImage[0].filename}`;
-    }
-    if (req.files?.backgroundVideo) {
-      data.backgroundVideo = `/uploads/${req.files.backgroundVideo[0].filename}`;
+    if (data.content) {
+      try {
+        data.content = Array.isArray(data.content)
+          ? data.content
+          : JSON.parse(data.content);
+      } catch {
+        data.content = [data.content];
+      }
     }
 
-    // Media files (array)
+    if (req.files?.backgroundImage) {
+      data.backgroundImage = req.files?.backgroundImage[0];
+    }
+    if (req.files?.backgroundVideo) {
+      data.backgroundVideo = req.files?.backgroundVideo[0];
+    }
+
     const mediaFiles = req.files?.media || [];
 
     const section = await sectionService.updateSection(Number(req.params.id), {
       ...data,
-      orderIndex: req.body.orderIndex ? Number(req.body.orderIndex) : 0,
       mediaFiles,
     });
 

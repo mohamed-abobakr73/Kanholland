@@ -1,113 +1,184 @@
-import { BackgroundImageEntityType } from "@prisma/client";
 import prisma from "../config/prismaClient.js";
+import fs from "fs";
+import path from "path";
 
 export async function createPage(data, userId) {
-  const page = await prisma.page.create({
+  return await prisma.page.create({
     data: {
       slug: data.slug,
       title: data.title,
       description: data.description,
       backgroundVideoUrl: data.backgroundVideoUrl,
+      ...(data.backgroundImage && {
+        backgroundImage: {
+          create: {
+            fileUrl: `/uploads/${data.backgroundImage.filename}`,
+            fileName: data.backgroundImage.filename,
+            mimeType: data.backgroundImage.mimetype,
+            fileSize: data.backgroundImage.size,
+          },
+        },
+      }),
+    },
+    include: {
+      backgroundImage: {
+        select: {
+          id: true,
+          fileUrl: true,
+          fileName: true,
+          mimeType: true,
+          fileSize: true,
+        },
+      },
     },
   });
-
-  if (data.backgroundImage) {
-    const imageData = {
-      fileUrl: `/uploads/${data.backgroundImage.filename}`,
-      fileName: data.backgroundImage.filename,
-      mimeType: data.backgroundImage.mimetype,
-      fileSize: data.backgroundImage.size,
-      entityId: page.id,
-      entityType: BackgroundImageEntityType.PAGE,
-    };
-    await prisma.background_Image.create({
-      data: imageData,
-    });
-  }
-
-  const backgroundImage = await prisma.background_Image.findFirst({
-    where: {
-      entityType: "PAGE",
-      entityId: page.id,
-    },
-  });
-
-  return { ...page, backgroundImage };
 }
 
 export async function getPageById(id) {
   return prisma.page.findUnique({
     where: { id },
     include: {
-      backgroundImage: true,
-      sections: { include: { media: true } },
+      backgroundImage: {
+        select: {
+          id: true,
+          fileUrl: true,
+          fileName: true,
+          mimeType: true,
+          fileSize: true,
+        },
+      },
+      sections: {
+        include: {
+          media: {
+            select: {
+              id: true,
+              fileUrl: true,
+              fileName: true,
+              mimeType: true,
+              fileSize: true,
+            },
+          },
+          backgroundImage: {
+            select: {
+              id: true,
+              fileUrl: true,
+              fileName: true,
+              mimeType: true,
+              fileSize: true,
+            },
+          },
+        },
+      },
     },
   });
 }
 
 export async function getAllPages() {
-  const pages = await prisma.page.findMany({});
-
-  const pagesWithImages = await Promise.all(
-    pages.map(async (page) => {
-      const backgroundImage = await prisma.background_Image.findFirst({
-        where: {
-          entityType: "PAGE",
-          entityId: page.id,
-        },
+  return await prisma.page.findMany({
+    include: {
+      backgroundImage: {
         select: {
           id: true,
           fileUrl: true,
           fileName: true,
-          fileSize: true,
           mimeType: true,
+          fileSize: true,
         },
-      });
+      },
+      sections: {
+        include: {
+          media: {
+            select: {
+              id: true,
+              fileUrl: true,
+              fileName: true,
+              mimeType: true,
+              fileSize: true,
+            },
+          },
+          backgroundImage: {
+            select: {
+              id: true,
+              fileUrl: true,
+              fileName: true,
+              mimeType: true,
+              fileSize: true,
+            },
+          },
+        },
+      },
+    },
+  });
+}
 
-      return {
-        ...page,
-        backgroundImage,
-      };
-    })
-  );
-
-  return pagesWithImages;
+function deleteFileIfExists(fileUrl) {
+  if (!fileUrl) return;
+  const oldFilePath = path.join(process.cwd(), fileUrl.replace(/^\//, ""));
+  fs.unlink(oldFilePath, (err) => {
+    if (err) console.error("Failed to delete file:", err);
+  });
 }
 
 export async function updatePage(id, data, userId) {
-  if (data.backgroundImage) {
-    await prisma.background_Image.deleteMany({ where: { entityId: id } });
-    const imageData = {
-      fileUrl: `/uploads/${data.backgroundImage.filename}`,
-      fileName: data.backgroundImage.filename,
-      mimeType: data.backgroundImage.mimetype,
-      fileSize: data.backgroundImage.size,
-      entityId: id,
-      entityType: BackgroundImageEntityType.PAGE,
-    };
+  let updateData = {
+    slug: data.slug,
+    title: data.title,
+    description: data.description,
+    backgroundVideoUrl: data.backgroundVideoUrl,
+  };
 
-    await prisma.background_Image.create({
-      data: imageData,
-    });
+  if ("backgroundImage" in data) {
+    if (data.backgroundImage === null) {
+      const oldBg = await prisma.background_Image.findUnique({
+        where: { pageId: id },
+        select: { fileUrl: true },
+      });
+
+      updateData.backgroundImage = { delete: true };
+
+      deleteFileIfExists(oldBg?.fileUrl);
+    } else if (data.backgroundImage) {
+      const oldBg = await prisma.background_Image.findUnique({
+        where: { pageId: id },
+        select: { fileUrl: true },
+      });
+
+      updateData.backgroundImage = {
+        upsert: {
+          create: {
+            fileUrl: `/uploads/${data.backgroundImage.filename}`,
+            fileName: data.backgroundImage.filename,
+            mimeType: data.backgroundImage.mimetype,
+            fileSize: data.backgroundImage.size,
+          },
+          update: {
+            fileUrl: `/uploads/${data.backgroundImage.filename}`,
+            fileName: data.backgroundImage.filename,
+            mimeType: data.backgroundImage.mimetype,
+            fileSize: data.backgroundImage.size,
+          },
+        },
+      };
+
+      deleteFileIfExists(oldBg?.fileUrl);
+    }
   }
 
-  delete data.backgroundImage;
-
-  const page = await prisma.page.update({
+  return await prisma.page.update({
     where: { id },
-    data: {
-      ...data,
+    data: updateData,
+    include: {
+      backgroundImage: {
+        select: {
+          id: true,
+          fileUrl: true,
+          fileName: true,
+          mimeType: true,
+          fileSize: true,
+        },
+      },
     },
   });
-
-  const backgroundImage = await prisma.background_Image.findFirst({
-    where: {
-      entityType: "PAGE",
-      entityId: page.id,
-    },
-  });
-
-  return { ...page, backgroundImage };
 }
 
 export async function deletePage(id) {

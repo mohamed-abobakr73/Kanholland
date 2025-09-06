@@ -1,14 +1,18 @@
-import { z } from "zod";
+import z from "zod";
 
 export const createSectionSchema = z.object({
-  pageId: z.coerce.number(), // 👈 converts "1" → 1
+  pageId: z.coerce.number(),
   title: z.string().optional(),
-  content: z.string().optional(),
-  orderIndex: z.coerce.number().optional().default(0),
+  content: z
+    .union([z.string(), z.array(z.string())])
+    .optional()
+    .transform((val) => (typeof val === "string" ? [val] : val)),
 });
 
 export const updateSectionSchema = z.object({
   title: z.string().optional(),
-  content: z.string().optional(),
-  orderIndex: z.coerce.number().optional(),
+  content: z
+    .union([z.string(), z.array(z.string())])
+    .optional()
+    .transform((val) => (typeof val === "string" ? [val] : val)),
 });

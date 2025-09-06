@@ -21,22 +21,21 @@ sectionsRoute.post(
   upload.fields([
     { name: "backgroundImage", maxCount: 1 },
     { name: "backgroundVideo", maxCount: 1 },
-    { name: "media", maxCount: 10 }, // allow up to 10 media files
+    { name: "media", maxCount: 10 },
   ]),
-  validateRequestBody(createSectionSchema.partial()), // allow flexible body
+  validateRequestBody(createSectionSchema.partial()),
   createSectionHandler
 );
 
 sectionsRoute.get("/", getSectionsHandler);
 sectionsRoute.get("/:id", getSectionByIdHandler);
 
-// Update section with file uploads
 sectionsRoute.put(
   "/:id",
   upload.fields([
     { name: "backgroundImage", maxCount: 1 },
     { name: "backgroundVideo", maxCount: 1 },
-    { name: "media", maxCount: 10 }, // allow up to 10 media files
+    { name: "media", maxCount: 10 },
   ]),
   validateRequestBody(updateSectionSchema.partial()),
   updateSectionHandler
