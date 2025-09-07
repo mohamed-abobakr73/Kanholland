@@ -1,31 +1,57 @@
 import prisma from "../prisma/client.js";
+import AppError from "../utils/AppError.js";
+import httpStatusText from "../utils/httpStatusText.js";
 
 export const createDog = async (data) => {
-  return await prisma.dog.create({ data });
+  const dog = await prisma.dog.create({ data });
+
+  if (!dog) {
+    throw new AppError("Dog not created", 400, httpStatusText.BAD_REQUEST);
+  }
+
+  return dog;
 };
 
 export const getDogs = async () => {
-  return await prisma.dog.findMany({
+  const dogs = await prisma.dog.findMany({
     include: { profileImage: true, media: true, trainingPrograms: true },
   });
+
+  return dogs;
 };
 
 export const getDogById = async (id) => {
-  return await prisma.dog.findUnique({
+  const dog = await prisma.dog.findUnique({
     where: { id },
     include: { profileImage: true, media: true, trainingPrograms: true },
   });
+
+  if (!dog) {
+    throw new AppError("Dog not found", 404, httpStatusText.NOT_FOUND);
+  }
+
+  return dog;
 };
 
 export const updateDog = async (id, data) => {
-  return await prisma.dog.update({
+  const updatedDog = await prisma.dog.update({
     where: { id },
     data,
   });
+
+  if (!updatedDog) {
+    throw new AppError("Dog not found", 404, httpStatusText.NOT_FOUND);
+  }
+
+  return updatedDog;
 };
 
 export const deleteDog = async (id) => {
-  return await prisma.dog.delete({
+  const deletedDog = await prisma.dog.delete({
     where: { id },
   });
+
+  if (!deletedDog) {
+    throw new AppError("Dog not found", 404, httpStatusText.NOT_FOUND);
+  }
 };
