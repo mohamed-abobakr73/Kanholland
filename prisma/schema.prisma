@@ -38,7 +38,8 @@ model User {
   email        String           @unique
   username     String           @unique
   passwordHash String
-  role         Role             @default(USER)
+  role         Role             @default(SUPER_ADMIN)
+  isActive     Boolean          @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

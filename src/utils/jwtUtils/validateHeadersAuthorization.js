@@ -12,6 +12,7 @@ const validateHeadersAuthorization = (req) => {
   }
 
   const token = authHeaders.split(" ")[1];
+
   return token;
 };
 

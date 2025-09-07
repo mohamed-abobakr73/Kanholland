@@ -8,6 +8,20 @@ import jwt from "jsonwebtoken";
 
 configDotenv();
 
+export const getCurrentUser = async (userId) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      email: true,
+      username: true,
+      role: true,
+      isActive: true,
+    },
+  });
+  return user;
+};
+
 export const getAccessToken = async (refreshToken) => {
   const currentUser = jwt.verify(
     refreshToken,
