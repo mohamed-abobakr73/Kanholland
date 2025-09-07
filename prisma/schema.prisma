@@ -43,25 +43,10 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  refreshTokens RefreshToken[]
-
   // authored/updated content (optional string mapping kept on entities for simplicity)
   // createdPages  Page[]     @relation("PageCreatedBy")
   // updatedPages  Page[]     @relation("PageUpdatedBy")
   passwordResetTokens PasswordResetToken[]
-}
-
-model RefreshToken {
-  id        String   @id @default(uuid())
-  token     String   @unique
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expiresAt DateTime
-  revokedAt DateTime?
-  createdAt DateTime @default(now())
-
-  @@index([userId])
-  @@index([expiresAt])
 }
 
 model PasswordResetToken {
@@ -93,6 +78,9 @@ model Media {
 
   sectionId Int?
   section   Section? @relation(fields: [sectionId], references: [id])
+
+  dogId Int?
+  dog   Dog? @relation(fields: [dogId], references: [id])
 }
 
 model Background_Image {
@@ -107,6 +95,9 @@ model Background_Image {
 
   sectionId Int? @unique()
   section   Section? @relation(fields: [sectionId], references: [id])
+
+  dogId Int? @unique
+  dog   Dog? @relation(fields: [dogId], references: [id])
 }
 
 // -------------------- Pages / Sections --------------------
@@ -165,50 +156,27 @@ model Dog {
   isAvailable      Boolean   @default(true)
   updatedBy        String?
 
-  profileImageId Int?
+  profileImageId  Background_Image?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  media            DogMedia[]
-  trainingPrograms DogTrainingProgram[]
+  media            Media[]
+  trainingPrograms TrainingProgram[]
 }
 
 model TrainingProgram {
   id              Int     @id @default(autoincrement())
+  dogId           Int
   programName     String
   description     String?
   difficultyLevel Int?
   duration        String?
-  status          String? // keep string to match Swagger (Active/Inactive/etc.)
+  status          String?
 
-  dogs DogTrainingProgram[]
+  dog Dog[]
 }
 
-model DogTrainingProgram {
-  id               Int @id @default(autoincrement())
-  dogId            Int
-  trainingProgramId Int
-
-  dog  Dog             @relation(fields: [dogId], references: [id], onDelete: Cascade)
-  prog TrainingProgram @relation(fields: [trainingProgramId], references: [id], onDelete: Cascade)
-
-  @@unique([dogId, trainingProgramId])
-  @@index([dogId])
-  @@index([trainingProgramId])
-}
-
-model DogMedia {
-  id      Int   @id @default(autoincrement())
-  dogId   Int
-  mediaId Int
-
-  dog   Dog   @relation(fields: [dogId], references: [id], onDelete: Cascade)
-
-  @@unique([dogId, mediaId])
-  @@index([dogId])
-  @@index([mediaId])
-}
 
 // -------------------- Courses --------------------
 model Course {
