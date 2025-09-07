@@ -3,6 +3,7 @@ import {
   getAccessToken,
   loginUser,
   getCurrentUser,
+  createAdmin,
 } from "../services/authService.js";
 
 export const getCurrentUserHandler = asyncHandler(async (req, res) => {
@@ -14,6 +15,11 @@ export const getCurrentUserHandler = asyncHandler(async (req, res) => {
 export const getAccessTokenHandler = asyncHandler(async (req, res) => {
   const { refreshToken } = req.body;
   const result = await getAccessToken(refreshToken);
+  return res.json(result);
+});
+
+export const createAdminHandler = asyncHandler(async (req, res) => {
+  const result = await createAdmin(req.body);
   return res.json(result);
 });
 

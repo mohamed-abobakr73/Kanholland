@@ -46,6 +46,22 @@ export const getAccessToken = async (refreshToken) => {
   };
 };
 
+export const createAdmin = async (data) => {
+  const passwordHash = await bcrypt.hash(data.password, 10);
+
+  delete data.password;
+
+  const user = await prisma.user.create({
+    data: {
+      ...data,
+      passwordHash,
+      role: "SUPER_ADMIN",
+    },
+  });
+
+  return user;
+};
+
 export const loginUser = async (email, password) => {
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
