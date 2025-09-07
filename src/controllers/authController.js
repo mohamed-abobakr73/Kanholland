@@ -1,5 +1,5 @@
 import asyncHandler from "../middlewares/asyncHandler.js";
-import { loginUser } from "../services/authService.js";
+import { getAccessToken, loginUser } from "../services/authService.js";
 
 export const getAccessTokenHandler = asyncHandler(async (req, res) => {
   const { refreshToken } = req.body;

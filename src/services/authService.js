@@ -4,6 +4,7 @@ import AppError from "../utils/AppError.js";
 import httpStatusText from "../utils/httpStatusText.js";
 import { configDotenv } from "dotenv";
 import generateJwt from "../utils/jwtUtils/generateJwt.js";
+import jwt from "jsonwebtoken";
 
 configDotenv();
 
