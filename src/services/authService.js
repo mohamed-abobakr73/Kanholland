@@ -7,6 +7,30 @@ import generateJwt from "../utils/jwtUtils/generateJwt.js";
 
 configDotenv();
 
+export const getAccessToken = async (refreshToken) => {
+  const currentUser = jwt.verify(
+    refreshToken,
+    process.env.REFRESH_TOKEN_SECRET
+  );
+
+  if (!currentUser) {
+    throw new AppError("Invalid refresh token", 401, httpStatusText.FAIL);
+  }
+
+  const tokenPayload = {
+    userId: currentUser.id,
+    email: currentUser.email,
+    username: currentUser.username,
+  };
+
+  const token = generateJwt("access", tokenPayload);
+
+  return {
+    token,
+    expiresAtUtc: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+  };
+};
+
 export const loginUser = async (email, password) => {
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
