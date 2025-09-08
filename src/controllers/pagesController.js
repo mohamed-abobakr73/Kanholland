@@ -28,9 +28,16 @@ export const getAllPagesHandler = asyncHandler(async (req, res, next) => {
 
 export const updatePageHandler = asyncHandler(async (req, res, next) => {
   const data = req.body;
-  if (req.file) {
-    data.backgroundImage = req.file;
+
+  if (req.files?.backgroundImage) {
+    data.backgroundImage = req.files?.backgroundImage[0];
   }
+
+  if (req.files?.backgroundVideo) {
+    data.backgroundVideo = req.files?.backgroundVideo[0];
+  }
+
+  console.log(data);
 
   const page = await pageService.updatePage(Number(req.params.id), data, 1);
 

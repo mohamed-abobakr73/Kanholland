@@ -101,13 +101,25 @@ model Background_Image {
   dog   Dog? @relation(fields: [dogId], references: [id])
 }
 
+model Background_Video {
+  id Int @id @default(autoincrement())
+  fileUrl String
+  fileName String
+  mimeType String
+  fileSize Int?
+  duration Int? // Video-specific: duration in seconds
+  pageId Int? @unique()
+  page   Page? @relation(fields: [pageId], references: [id])
+  sectionId Int? @unique()
+  section   Section? @relation(fields: [sectionId], references: [id])
+}
+
 // -------------------- Pages / Sections --------------------
 model Page {
   id                 Int       @id @default(autoincrement())
   slug               String    @unique
   title              String
   description        String
-  backgroundVideoUrl String?
 
   createdBy   String?
   updatedBy   String?
@@ -122,6 +134,7 @@ model Page {
 
   // Relations
   backgroundImage  Background_Image?
+  backgroundVideo  Background_Video?
   sections         Section[]
   media            Media[]
 }
@@ -133,13 +146,13 @@ model Section {
   page            Page      @relation(fields: [pageId], references: [id], onDelete: Cascade)
   title           String?
   content         Json?
-  backgroundVideo String?
   orderIndex      Int       @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   backgroundImage   Background_Image?
+  backgroundVideo  Background_Video?
   media             Media[]
   @@unique([pageId, orderIndex])
   @@index([pageId])

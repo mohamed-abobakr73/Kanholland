@@ -27,7 +27,10 @@ pagesRoute.get("/:id", getPageHandler);
 
 pagesRoute.put(
   "/:id",
-  upload.single("backgroundImage"),
+  upload.fields([
+    { name: "backgroundImage", maxCount: 1 },
+    { name: "backgroundVideo", maxCount: 1 },
+  ]),
   // validateRequestBody(updatePageSchema),
   updatePageHandler
 );

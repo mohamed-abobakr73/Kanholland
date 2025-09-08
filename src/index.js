@@ -10,6 +10,7 @@ import prisma from "./config/prismaClient.js";
 import SuperAdminCreator from "./scripts/createSuperAdmin.js";
 import { fileURLToPath } from "url";
 import path from "path";
+import dogsRoute from "./routes/dogsRoute.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -43,6 +44,7 @@ app.use("/api/uploads", express.static(path.join(__dirname, "../uploads")));
 app.use("/api/auth", authRoute);
 app.use("/api/pages", pagesRoute);
 app.use("/api/sections", sectionsRoute);
+app.use("/api/dogs", dogsRoute);
 
 app.get("/api/health", (req, res) =>
   res.status(200).json({ message: "Healthy" })

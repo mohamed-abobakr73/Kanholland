@@ -1,4 +1,4 @@
-import asyncHandler from "../utils/asyncHandler.js";
+import asyncHandler from "../middlewares/asyncHandler.js";
 import {
   createDog,
   getDogs,
@@ -9,7 +9,14 @@ import {
 import httpStatusText from "../utils/httpStatusText.js";
 
 export const createDogHandler = asyncHandler(async (req, res) => {
+  const data = req.body;
+
+  if (req.file) {
+    data.profileImage = req.file;
+  }
+
   const dog = await createDog(req.body);
+
   res.status(201).json({ success: httpStatusText.SUCCESS, data: dog });
 });
 
@@ -19,7 +26,10 @@ export const getDogsHandler = asyncHandler(async (req, res) => {
 });
 
 export const getDogByIdHandler = asyncHandler(async (req, res) => {
-  const dog = await getDogById(Number(req.params.id));
+  const dogId = Number(req.params.id);
+
+  const dog = await getDogById(dogId);
+
   res.json({ success: httpStatusText.SUCCESS, data: dog });
 });
 

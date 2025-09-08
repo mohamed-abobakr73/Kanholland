@@ -1,9 +1,19 @@
-import prisma from "../prisma/client.js";
+import prisma from "../config/prismaClient.js";
 import AppError from "../utils/AppError.js";
 import httpStatusText from "../utils/httpStatusText.js";
 
 export const createDog = async (data) => {
-  const dog = await prisma.dog.create({ data });
+  const dog = await prisma.dog.create({
+    data,
+    profileImage: {
+      create: {
+        fileUrl: `/uploads/${data.profileImage.filename}`,
+        fileName: data.profileImage.filename,
+        mimeType: data.profileImage.mimetype,
+        fileSize: data.profileImage.size,
+      },
+    },
+  });
 
   if (!dog) {
     throw new AppError("Dog not created", 400, httpStatusText.BAD_REQUEST);

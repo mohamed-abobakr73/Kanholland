@@ -120,12 +120,11 @@ function deleteFileIfExists(fileUrl) {
 }
 
 export async function updatePage(id, data, userId) {
-  let updateData = {
-    slug: data.slug,
-    title: data.title,
-    description: data.description,
-    backgroundVideoUrl: data.backgroundVideoUrl,
-  };
+  let updateData = {};
+
+  if (data.slug !== undefined) updateData.slug = data.slug;
+  if (data.title !== undefined) updateData.title = data.title;
+  if (data.description !== undefined) updateData.description = data.description;
 
   if ("backgroundImage" in data) {
     if (data.backgroundImage === null) {
