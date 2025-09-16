@@ -160,7 +160,6 @@ export const updateDog = async (id, data) => {
         select: {
           id: true,
           fileUrl: true,
-          fileName: true,
           mimeType: true,
           fileSize: true,
         },

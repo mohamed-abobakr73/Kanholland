@@ -38,10 +38,6 @@ export const updateDogHandler = asyncHandler(async (req, res) => {
 
   data.mediaFiles = mediaFiles;
 
-  console.log("43_" + data.mediaFiles[0].originalname);
-
-  data.mediaFiles[0].originalname = "43_" + data.mediaFiles[0].originalname;
-
   const dog = await updateDog(Number(req.params.id), data);
   res.json({ success: httpStatusText.SUCCESS, data: dog });
 });

@@ -11,6 +11,7 @@ import SuperAdminCreator from "./scripts/createSuperAdmin.js";
 import { fileURLToPath } from "url";
 import path from "path";
 import dogsRoute from "./routes/dogsRoute.js";
+import coursesRoute from "./routes/coursesRoute.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -45,6 +46,7 @@ app.use("/api/auth", authRoute);
 app.use("/api/pages", pagesRoute);
 app.use("/api/sections", sectionsRoute);
 app.use("/api/dogs", dogsRoute);
+app.use("/api/courses", coursesRoute);
 
 app.get("/api/health", (req, res) =>
   res.status(200).json({ message: "Healthy" })
