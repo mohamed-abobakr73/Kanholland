@@ -20,7 +20,7 @@ dogsRoute.get("/:id", getDogByIdHandler);
 dogsRoute.post(
   "/",
   verifyToken,
-  upload.single("profileImage"),
+  upload.fields([{ name: "media", maxCount: 10 }]),
   validateRequestBody(createDogSchema),
   createDogHandler
 );
@@ -28,6 +28,7 @@ dogsRoute.post(
 dogsRoute.put(
   "/:id",
   verifyToken,
+  upload.fields([{ name: "media", maxCount: 10 }]),
   validateRequestBody(createDogSchema.partial()),
   updateDogHandler
 );

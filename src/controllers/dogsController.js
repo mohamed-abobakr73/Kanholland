@@ -11,11 +11,9 @@ import httpStatusText from "../utils/httpStatusText.js";
 export const createDogHandler = asyncHandler(async (req, res) => {
   const data = req.body;
 
-  if (req.file) {
-    data.profileImage = req.file;
-  }
+  const mediaFiles = req.files?.media || [];
 
-  const dog = await createDog(req.body);
+  const dog = await createDog(data, mediaFiles);
 
   res.status(201).json({ success: httpStatusText.SUCCESS, data: dog });
 });
@@ -34,7 +32,17 @@ export const getDogByIdHandler = asyncHandler(async (req, res) => {
 });
 
 export const updateDogHandler = asyncHandler(async (req, res) => {
-  const dog = await updateDog(Number(req.params.id), req.body);
+  const data = req.body;
+
+  const mediaFiles = req.files?.media || [];
+
+  data.mediaFiles = mediaFiles;
+
+  console.log("43_" + data.mediaFiles[0].originalname);
+
+  data.mediaFiles[0].originalname = "43_" + data.mediaFiles[0].originalname;
+
+  const dog = await updateDog(Number(req.params.id), data);
   res.json({ success: httpStatusText.SUCCESS, data: dog });
 });
 

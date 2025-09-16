@@ -198,9 +198,9 @@ export async function updateSection(id, data) {
   if (data.mediaFiles.length > 0) {
     await Promise.all(
       data.mediaFiles.map(async (file) => {
-        const fileName = file.originalname.split("_")[0];
-        const mediaId = file.originalname.split("_")[1];
-
+        const fileName = file.originalname.split("_")[1];
+        const mediaId = file.originalname.split("_")[0];
+        console.log(mediaId);
         if (mediaId) {
           const oldMedia = await prisma.media.findUnique({
             where: { id: Number(mediaId) },
@@ -210,7 +210,7 @@ export async function updateSection(id, data) {
           const updatedMedia = prisma.media.update({
             where: { id: Number(mediaId) },
             data: {
-              fileUrl: `/uploads/${fileName}`,
+              fileUrl: `/uploads/${file.filename}`,
               fileName: file.originalname,
               mimeType: file.mimetype,
               fileSize: file.size,
@@ -235,7 +235,7 @@ export async function updateSection(id, data) {
           return prisma.media.create({
             data: {
               sectionId: id,
-              fileUrl: `/uploads/${fileName}`,
+              fileUrl: `/uploads/${file.filename}`,
               fileName: file.originalname,
               mimeType: file.mimetype,
               fileSize: file.size,

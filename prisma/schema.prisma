@@ -162,12 +162,9 @@ model Section {
 model Dog {
   id               Int       @id @default(autoincrement())
   name             String
-  breed            String
-  age              Int?
-  trainingLevel    Int?
-  certifications   String?
-  specialization   String?
-  isAvailable      Boolean   @default(true)
+  firstDescription String
+  secondDescription String
+  title String
   updatedBy        String?
 
   profileImage  Background_Image?
@@ -176,39 +173,17 @@ model Dog {
   updatedAt DateTime @updatedAt
 
   media            Media[]
-  trainingPrograms TrainingProgram[]
 }
-
-model TrainingProgram {
-  id              Int     @id @default(autoincrement())
-  dogId           Int
-  programName     String
-  description     String?
-  difficultyLevel Int?
-  duration        String?
-  status          String?
-
-  dog Dog[]
-}
-
 
 // -------------------- Courses --------------------
 model Course {
   id               Int          @id @default(autoincrement())
   title            String
   description      String
-  topics           String?
-  learningOutcomes String?
-  prerequisites    String?
-  duration         String?
-  difficultyLevel  Int?
-  maxParticipants  Int?
-  price            Float?
-  isAvailable      Boolean      @default(true)
-  status           CourseStatus @default(Active)
-
+  note String?
+  topics           Json
+  advancedTopics   Json
   createdBy String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
 }

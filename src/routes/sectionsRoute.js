@@ -6,7 +6,7 @@ import {
   updateSectionHandler,
   deleteSectionHandler,
 } from "../controllers/sectionsController.js";
-
+import verifyToken from "../middlewares/verifyToken.js";
 import {
   createSectionSchema,
   updateSectionSchema,
@@ -18,6 +18,7 @@ const sectionsRoute = Router();
 
 sectionsRoute.post(
   "/",
+  verifyToken,
   upload.fields([
     { name: "backgroundImage", maxCount: 1 },
     { name: "backgroundVideo", maxCount: 1 },
@@ -27,11 +28,12 @@ sectionsRoute.post(
   createSectionHandler
 );
 
-sectionsRoute.get("/", getSectionsHandler);
-sectionsRoute.get("/:id", getSectionByIdHandler);
+sectionsRoute.get("/", verifyToken, getSectionsHandler);
+sectionsRoute.get("/:id", verifyToken, getSectionByIdHandler);
 
 sectionsRoute.put(
   "/:id",
+  verifyToken,
   upload.fields([
     { name: "backgroundImage", maxCount: 1 },
     { name: "backgroundVideo", maxCount: 1 },
@@ -41,6 +43,6 @@ sectionsRoute.put(
   updateSectionHandler
 );
 
-sectionsRoute.delete("/:id", deleteSectionHandler);
+sectionsRoute.delete("/:id", verifyToken, deleteSectionHandler);
 
 export default sectionsRoute;

@@ -74,6 +74,8 @@ export const updateSectionHandler = asyncHandler(async (req, res, next) => {
 
   const mediaFiles = req.files?.media || [];
 
+  console.log("media files is", mediaFiles);
+
   const section = await sectionService.updateSection(Number(req.params.id), {
     ...data,
     mediaFiles,

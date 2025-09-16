@@ -16,17 +16,18 @@ const pagesRoute = express.Router();
 // Create page with file uploads
 pagesRoute.post(
   "/",
-  // verifyToken,
+  verifyToken,
   upload.single("backgroundImage"),
   validateRequestBody(createPageSchema),
   createPageHandler
 );
 
-pagesRoute.get("/", getAllPagesHandler);
-pagesRoute.get("/:id", getPageHandler);
+pagesRoute.get("/", verifyToken, getAllPagesHandler);
+pagesRoute.get("/:id", verifyToken, getPageHandler);
 
 pagesRoute.put(
   "/:id",
+  verifyToken,
   upload.fields([
     { name: "backgroundImage", maxCount: 1 },
     { name: "backgroundVideo", maxCount: 1 },
@@ -35,6 +36,6 @@ pagesRoute.put(
   updatePageHandler
 );
 
-pagesRoute.delete("/:id", deletePageHandler);
+pagesRoute.delete("/:id", verifyToken, deletePageHandler);
 
 export default pagesRoute;
