@@ -164,7 +164,6 @@ model Dog {
   name             String
   firstDescription String
   secondDescription String
-  title String
   updatedBy        String?
 
   profileImage  Background_Image?

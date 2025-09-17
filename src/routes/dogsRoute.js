@@ -7,6 +7,7 @@ import {
   getDogByIdHandler,
   updateDogHandler,
   deleteDogHandler,
+  getDogsNamesHandler,
 } from "../controllers/dogsController.js";
 import { createDogSchema } from "../schemas/dogsSchema.js";
 import { upload } from "../config/multer.js";
@@ -14,6 +15,8 @@ import { upload } from "../config/multer.js";
 const dogsRoute = Router();
 
 dogsRoute.get("/", getDogsHandler);
+
+dogsRoute.get("/names", getDogsNamesHandler);
 
 dogsRoute.get("/:id", getDogByIdHandler);
 

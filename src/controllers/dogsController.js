@@ -5,6 +5,7 @@ import {
   getDogById,
   updateDog,
   deleteDog,
+  getDogsNames,
 } from "../services/dogsService.js";
 import httpStatusText from "../utils/httpStatusText.js";
 
@@ -21,6 +22,11 @@ export const createDogHandler = asyncHandler(async (req, res) => {
 export const getDogsHandler = asyncHandler(async (req, res) => {
   const dogs = await getDogs();
   res.json({ success: httpStatusText.SUCCESS, data: dogs });
+});
+
+export const getDogsNamesHandler = asyncHandler(async (req, res) => {
+  const dogsNames = await getDogsNames();
+  res.json({ success: httpStatusText.SUCCESS, data: dogsNames });
 });
 
 export const getDogByIdHandler = asyncHandler(async (req, res) => {

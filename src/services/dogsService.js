@@ -61,6 +61,16 @@ export const getDogs = async () => {
   return dogs;
 };
 
+export const getDogsNames = async () => {
+  const dogNames = await prisma.dog.findMany({
+    select: {
+      name: true,
+    },
+  });
+
+  return dogNames;
+};
+
 export const getDogById = async (id) => {
   const dog = await prisma.dog.findUnique({
     where: { id },
