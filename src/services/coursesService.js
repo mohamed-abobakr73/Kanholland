@@ -10,7 +10,6 @@ export const createCourse = async (data) => {
       note: data.note || null,
       topics: data.topics,
       advancedTopics: data.advancedTopics,
-      createdBy: data.createdBy,
     },
   });
 

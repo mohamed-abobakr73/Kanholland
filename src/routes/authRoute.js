@@ -1,9 +1,11 @@
 import { Router } from "express";
 import {
   createAdminHandler,
+  forgetPasswordHandler,
   getAccessTokenHandler,
   getCurrentUserHandler,
   loginHandler,
+  resetPasswordHandler,
 } from "../controllers/authController.js";
 import { validateRequestBody } from "../middlewares/validateRequestBody.js";
 import {
@@ -21,6 +23,18 @@ router.post(
   "/refresh-token",
   validateRequestBody(getAccessTokenSchema),
   getAccessTokenHandler
+);
+
+router.post(
+  "/forget-password",
+  // validateRequestBody(getAccessTokenSchema),
+  forgetPasswordHandler
+);
+
+router.post(
+  "/reset-password",
+  // validateRequestBody(getAccessTokenSchema),
+  resetPasswordHandler
 );
 
 router.post(
