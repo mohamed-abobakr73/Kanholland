@@ -8,7 +8,7 @@ import {
 } from "../controllers/pagesController.js";
 import { validateRequestBody } from "../middlewares/validateRequestBody.js";
 import { createPageSchema } from "../schemas/pagesSchema.js";
-import { upload } from "../config/multer.js";
+import { upload } from "../config/multerS3.js";
 import verifyToken from "../middlewares/verifyToken.js";
 
 const pagesRoute = express.Router();

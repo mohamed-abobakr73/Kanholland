@@ -90,6 +90,7 @@ model Background_Image {
   fileName String
   mimeType String
   fileSize Int?
+  key String?
 
   pageId Int? @unique()
   page   Page? @relation(fields: [pageId], references: [id])

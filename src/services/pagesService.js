@@ -1,8 +1,18 @@
 import prisma from "../config/prismaClient.js";
 import fs from "fs";
 import path from "path";
+import AppError from "../utils/AppError.js";
+import httpStatusText from "../utils/httpStatusText.js";
+import { deleteFileFromS3 } from "../config/multerS3.js";
 
 export async function createPage(data, userId) {
+  const pageExists = await prisma.page.findUnique({
+    where: { slug: data.slug },
+  });
+  if (pageExists) {
+    throw new AppError("Page already exists", 400, httpStatusText.FAIL);
+  }
+
   return await prisma.page.create({
     data: {
       slug: data.slug,
@@ -11,12 +21,7 @@ export async function createPage(data, userId) {
       backgroundVideoUrl: data.backgroundVideoUrl,
       ...(data.backgroundImage && {
         backgroundImage: {
-          create: {
-            fileUrl: `/uploads/${data.backgroundImage.filename}`,
-            fileName: data.backgroundImage.filename,
-            mimeType: data.backgroundImage.mimetype,
-            fileSize: data.backgroundImage.size,
-          },
+          create: data.backgroundImage,
         },
       }),
     },
@@ -111,14 +116,6 @@ export async function getAllPages() {
   });
 }
 
-function deleteFileIfExists(fileUrl) {
-  if (!fileUrl) return;
-  const oldFilePath = path.join(process.cwd(), fileUrl.replace(/^\//, ""));
-  fs.unlink(oldFilePath, (err) => {
-    if (err) console.error("Failed to delete file:", err);
-  });
-}
-
 export async function updatePage(id, data, userId) {
   let updateData = {};
 
@@ -130,36 +127,27 @@ export async function updatePage(id, data, userId) {
     if (data.backgroundImage === null) {
       const oldBg = await prisma.background_Image.findUnique({
         where: { pageId: id },
-        select: { fileUrl: true },
+        select: { key: true },
       });
 
       updateData.backgroundImage = { delete: true };
 
-      deleteFileIfExists(oldBg?.fileUrl);
+      await deleteFileFromS3(oldBg?.key);
     } else if (data.backgroundImage) {
       const oldBg = await prisma.background_Image.findUnique({
         where: { pageId: id },
-        select: { fileUrl: true },
+        select: { key: true },
       });
 
       updateData.backgroundImage = {
         upsert: {
-          create: {
-            fileUrl: `/uploads/${data.backgroundImage.filename}`,
-            fileName: data.backgroundImage.filename,
-            mimeType: data.backgroundImage.mimetype,
-            fileSize: data.backgroundImage.size,
-          },
-          update: {
-            fileUrl: `/uploads/${data.backgroundImage.filename}`,
-            fileName: data.backgroundImage.filename,
-            mimeType: data.backgroundImage.mimetype,
-            fileSize: data.backgroundImage.size,
-          },
+          create: data.backgroundImage,
+          update: data.backgroundImage,
         },
       };
 
-      deleteFileIfExists(oldBg?.fileUrl);
+      console.log(oldBg?.key);
+      await deleteFileFromS3(oldBg?.key);
     }
   }
 

@@ -10,7 +10,7 @@ import {
   getDogsNamesHandler,
 } from "../controllers/dogsController.js";
 import { createDogSchema } from "../schemas/dogsSchema.js";
-import { upload } from "../config/multer.js";
+import { upload } from "../config/multerS3.js";
 
 const dogsRoute = Router();
 

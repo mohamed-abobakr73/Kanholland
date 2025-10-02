@@ -7,8 +7,16 @@ export const createPageHandler = asyncHandler(async (req, res, next) => {
   const data = req.body;
 
   if (req.file) {
-    data.backgroundImage = req.file;
+    data.backgroundImage = {
+      fileUrl: req.file.location,
+      fileName: req.file.originalname,
+      mimeType: req.file.mimetype,
+      fileSize: req.file.size,
+      key: req.file.key,
+    };
   }
+
+  console.log(data.backgroundImage);
 
   const page = await pageService.createPage(data, userId);
 
@@ -30,7 +38,14 @@ export const updatePageHandler = asyncHandler(async (req, res, next) => {
   const data = req.body;
 
   if (req.files?.backgroundImage) {
-    data.backgroundImage = req.files?.backgroundImage[0];
+    const file = req.files.backgroundImage[0];
+    data.backgroundImage = {
+      fileUrl: file.location,
+      fileName: file.originalname,
+      mimeType: file.mimetype,
+      fileSize: file.size,
+      key: file.key,
+    };
   }
 
   if (req.files?.backgroundVideo) {

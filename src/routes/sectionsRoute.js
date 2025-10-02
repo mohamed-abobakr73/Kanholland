@@ -12,7 +12,7 @@ import {
   updateSectionSchema,
 } from "../schemas/sectionsSchema.js";
 import { validateRequestBody } from "../middlewares/validateRequestBody.js";
-import { upload } from "../config/multer.js";
+import { upload } from "../config/multerS3.js";
 
 const sectionsRoute = Router();
 
