@@ -84,7 +84,7 @@ export const forgetPassword = async (email) => {
       { expiresIn: "15m" }
     );
 
-    const resetUrl = `https://kanholland.aydnlabs.com/reset-password?token=${jwtToken}&email=${email}`;
+    const resetUrl = `https://kanholland.aydnlabs.com/dashboard/reset-password?token=${jwtToken}&email=${email}`;
 
     const transporter = nodemailer.createTransport({
       service: "Gmail",
@@ -132,7 +132,7 @@ export const forgetPassword = async (email) => {
 };
 
 export const resetPassword = async (data) => {
-  const { email, token, password, confirmPassword } = data;
+  const { email, token, newPassword, confirmPassword } = data;
 
   const user = await prisma.user.findFirst({
     where: { email },
@@ -171,11 +171,11 @@ export const resetPassword = async (data) => {
     );
   }
 
-  if (password !== confirmPassword) {
+  if (newPassword !== confirmPassword) {
     throw new AppError("Passwords do not match", 400, httpStatusText.FAIL);
   }
 
-  const passwordHash = await bcrypt.hash(password, 10);
+  const passwordHash = await bcrypt.hash(newPassword, 10);
 
   await prisma.user.update({
     where: { email },

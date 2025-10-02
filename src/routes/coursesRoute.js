@@ -9,9 +9,9 @@ import {
 
 const coursesRoute = Router();
 
-coursesRoute.get("/", verifyToken, getAllCoursesHandler);
+coursesRoute.get("/", getAllCoursesHandler);
 
-coursesRoute.get("/:id", verifyToken, getCourseByIdHandler);
+coursesRoute.get("/:id", getCourseByIdHandler);
 
 coursesRoute.post("/", verifyToken, createCourseHandler);
 

@@ -22,8 +22,8 @@ pagesRoute.post(
   createPageHandler
 );
 
-pagesRoute.get("/", verifyToken, getAllPagesHandler);
-pagesRoute.get("/:id", verifyToken, getPageHandler);
+pagesRoute.get("/", getAllPagesHandler);
+pagesRoute.get("/:id", getPageHandler);
 
 pagesRoute.put(
   "/:id",
