@@ -1,52 +1,46 @@
 import prisma from "../config/prismaClient.js";
-import fs from "fs";
-import path from "path";
+import { deleteFileFromS3 } from "../config/multerS3.js";
 
-export const createSection = async (data, files = []) => {
-  const lastSection = await prisma.section.findFirst({
-    where: { pageId: data.pageId },
-    orderBy: { orderIndex: "desc" },
-    select: { orderIndex: true },
-  });
+export const createSection = async (data) => {
+  try {
+    const lastSection = await prisma.section.findFirst({
+      where: { pageId: data.pageId },
+      orderBy: { orderIndex: "desc" },
+      select: { orderIndex: true },
+    });
 
-  const nextOrderIndex = lastSection ? lastSection.orderIndex + 1 : 1;
+    const nextOrderIndex = lastSection ? lastSection.orderIndex + 1 : 1;
 
-  return await prisma.section.create({
-    data: {
-      title: data.title,
-      content: data.content,
-      backgroundVideo: data.backgroundVideo,
-      orderIndex: nextOrderIndex,
-      pageId: data.pageId,
+    return await prisma.section.create({
+      data: {
+        title: data.title,
+        content: data.content,
+        backgroundVideo: data.backgroundVideo,
+        orderIndex: nextOrderIndex,
+        pageId: data.pageId,
 
-      ...(data.backgroundImage && {
-        backgroundImage: {
-          create: {
-            fileUrl: `/uploads/${data.backgroundImage.filename}`,
-            fileName: data.backgroundImage.filename,
-            mimeType: data.backgroundImage.mimetype,
-            fileSize: data.backgroundImage.size,
+        ...(data.backgroundImage && {
+          backgroundImage: {
+            create: data.backgroundImage,
           },
-        },
-      }),
+        }),
 
-      ...(files.length > 0 && {
-        media: {
-          create: files.map((file) => ({
-            fileUrl: `/uploads/${file.filename}`,
-            fileName: file.originalname,
-            mimeType: file.mimetype,
-            fileSize: file.size,
-            uploadedBy: data.userId ?? null,
-          })),
-        },
-      }),
-    },
-    include: {
-      backgroundImage: true,
-      media: true,
-    },
-  });
+        ...(Array.isArray(data.media) &&
+          data.media.length > 0 && {
+            media: {
+              create: data.media.map((file) => file),
+            },
+          }),
+      },
+      include: {
+        backgroundImage: true,
+        media: true,
+      },
+    });
+  } catch (error) {
+    await deleteFileFromS3(data.backgroundImage.key);
+    throw error;
+  }
 };
 
 export const getSections = async () => {
@@ -129,51 +123,29 @@ export async function updateSection(id, data) {
     if (data.backgroundImage === null) {
       const oldBg = await prisma.background_Image.findUnique({
         where: { sectionId: id },
-        select: { fileUrl: true },
+        select: { key: true },
       });
 
       updateData.backgroundImage = { delete: true };
 
-      if (oldBg?.fileUrl) {
-        const oldFilePath = path.join(
-          process.cwd(),
-          oldBg.fileUrl.replace(/^\//, "")
-        );
-        fs.unlink(oldFilePath, (err) => {
-          if (err) console.error("Failed to delete old background image:", err);
-        });
+      if (oldBg?.key) {
+        await deleteFileFromS3(oldBg?.key);
       }
     } else if (data.backgroundImage) {
       const oldBg = await prisma.background_Image.findUnique({
         where: { sectionId: id },
-        select: { fileUrl: true },
+        select: { key: true },
       });
-
+      console.log(data.backgroundImage);
       updateData.backgroundImage = {
         upsert: {
-          create: {
-            fileUrl: `/uploads/${data.backgroundImage.filename}`,
-            fileName: data.backgroundImage.filename,
-            mimeType: data.backgroundImage.mimetype,
-            fileSize: data.backgroundImage.size,
-          },
-          update: {
-            fileUrl: `/uploads/${data.backgroundImage.filename}`,
-            fileName: data.backgroundImage.filename,
-            mimeType: data.backgroundImage.mimetype,
-            fileSize: data.backgroundImage.size,
-          },
+          create: data.backgroundImage,
+          update: data.backgroundImage,
         },
       };
 
-      if (oldBg?.fileUrl) {
-        const oldFilePath = path.join(
-          process.cwd(),
-          oldBg.fileUrl.replace(/^\//, "")
-        );
-        fs.unlink(oldFilePath, (err) => {
-          if (err) console.error("Failed to delete old background image:", err);
-        });
+      if (oldBg?.key) {
+        await deleteFileFromS3(oldBg?.key);
       }
     }
   }
@@ -195,52 +167,31 @@ export async function updateSection(id, data) {
     },
   });
 
-  if (data.mediaFiles.length > 0) {
+  if (Array.isArray(data.media) && data.media.length > 0) {
     await Promise.all(
-      data.mediaFiles.map(async (file) => {
-        const fileName = file.originalname.split("_")[1];
-        const mediaId = file.originalname.split("_")[0];
-        console.log(mediaId);
-        if (mediaId) {
+      data.media.map(async (file) => {
+        const fileName = file.fileName.split("_")[1];
+        const mediaId = file.fileName.split("_")[0];
+
+        if (mediaId && !isNaN(mediaId)) {
           const oldMedia = await prisma.media.findUnique({
             where: { id: Number(mediaId) },
-            select: { fileUrl: true },
+            select: { key: true },
           });
 
           const updatedMedia = prisma.media.update({
             where: { id: Number(mediaId) },
-            data: {
-              fileUrl: `/uploads/${file.filename}`,
-              fileName: file.originalname,
-              mimeType: file.mimetype,
-              fileSize: file.size,
-            },
+            data: file,
           });
 
-          if (oldMedia?.fileUrl) {
-            const oldFilePath = path.join(
-              process.cwd(),
-              oldMedia.fileUrl.replace(/^\//, "")
-            );
-
-            fs.unlink(oldFilePath, (err) => {
-              if (err) {
-                console.error("Failed to delete old media file:", err);
-              }
-            });
+          if (oldMedia?.key) {
+            await deleteFileFromS3(oldMedia?.key);
           }
 
           return updatedMedia;
         } else {
           return prisma.media.create({
-            data: {
-              sectionId: id,
-              fileUrl: `/uploads/${file.filename}`,
-              fileName: file.originalname,
-              mimeType: file.mimetype,
-              fileSize: file.size,
-              uploadedBy: data.userId ?? null,
-            },
+            data: { sectionId: id, ...file },
           });
         }
       })

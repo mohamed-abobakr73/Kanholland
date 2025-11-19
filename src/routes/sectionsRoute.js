@@ -28,8 +28,8 @@ sectionsRoute.post(
   createSectionHandler
 );
 
-sectionsRoute.get("/", verifyToken, getSectionsHandler);
-sectionsRoute.get("/:id", verifyToken, getSectionByIdHandler);
+sectionsRoute.get("/", getSectionsHandler);
+sectionsRoute.get("/:id", getSectionByIdHandler);
 
 sectionsRoute.put(
   "/:id",

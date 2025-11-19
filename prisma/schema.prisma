@@ -71,6 +71,7 @@ model Media {
   fileUrl    String      // absolute or relative URL
   mimeType   String
   fileSize   Int?
+  key String?
   uploadedAt DateTime    @default(now())
   uploadedBy String?
 

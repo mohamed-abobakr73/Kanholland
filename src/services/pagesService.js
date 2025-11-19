@@ -1,6 +1,4 @@
 import prisma from "../config/prismaClient.js";
-import fs from "fs";
-import path from "path";
 import AppError from "../utils/AppError.js";
 import httpStatusText from "../utils/httpStatusText.js";
 import { deleteFileFromS3 } from "../config/multerS3.js";

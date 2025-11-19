@@ -1,5 +1,6 @@
 import * as sectionService from "../services/sectionsService.js";
 import asyncHandler from "../middlewares/asyncHandler.js";
+import { deleteFileFromS3 } from "../config/multerS3.js";
 
 export const createSectionHandler = asyncHandler(async (req, res, next) => {
   const data = req.body;
@@ -16,6 +17,13 @@ export const createSectionHandler = asyncHandler(async (req, res, next) => {
 
   if (req.files?.backgroundImage) {
     data.backgroundImage = req.files.backgroundImage[0];
+    data.backgroundImage = {
+      fileUrl: data.backgroundImage.location,
+      fileName: data.backgroundImage.originalname,
+      mimeType: data.backgroundImage.mimetype,
+      fileSize: data.backgroundImage.size,
+      key: data.backgroundImage.key,
+    };
   }
   if (req.files?.backgroundVideo) {
     data.backgroundVideo = req.files.backgroundVideo[0];
@@ -23,12 +31,29 @@ export const createSectionHandler = asyncHandler(async (req, res, next) => {
 
   const mediaFiles = req.files?.media || [];
 
+  if (Array.isArray(mediaFiles) && mediaFiles.length > 0) {
+    data.media = mediaFiles.map((file) => ({
+      fileUrl: file.location,
+      fileName: file.originalname,
+      mimeType: file.mimetype,
+      fileSize: file.size,
+      key: file.key,
+    }));
+  }
+
   const payload = {
     ...data,
     pageId: Number(req.body.pageId),
   };
 
-  const section = await sectionService.createSection(payload, mediaFiles);
+  const section = await sectionService.createSection(payload);
+
+  if (!section) {
+    await deleteFileFromS3(data.backgroundImage.key);
+    return res
+      .status(404)
+      .json({ status: "error", message: "Error creating section" });
+  }
 
   res.status(201).json({
     status: "success",
@@ -67,19 +92,36 @@ export const updateSectionHandler = asyncHandler(async (req, res, next) => {
 
   if (req.files?.backgroundImage) {
     data.backgroundImage = req.files?.backgroundImage[0];
+    data.backgroundImage = {
+      fileUrl: data.backgroundImage.location,
+      fileName: data.backgroundImage.originalname,
+      mimeType: data.backgroundImage.mimetype,
+      fileSize: data.backgroundImage.size,
+      key: data.backgroundImage.key,
+    };
   }
   if (req.files?.backgroundVideo) {
     data.backgroundVideo = req.files?.backgroundVideo[0];
   }
 
   const mediaFiles = req.files?.media || [];
+  console.log(mediaFiles);
+  if (Array.isArray(mediaFiles) && mediaFiles.length > 0) {
+    data.media = mediaFiles.map((file) => ({
+      fileUrl: file.location,
+      fileName: file.originalname,
+      mimeType: file.mimetype,
+      fileSize: file.size,
+      key: file.key,
+    }));
+  }
 
-  console.log("media files is", mediaFiles);
+  // console.log("media files is", data.media);
 
-  const section = await sectionService.updateSection(Number(req.params.id), {
-    ...data,
-    mediaFiles,
-  });
+  const section = await sectionService.updateSection(
+    Number(req.params.id),
+    data
+  );
 
   res.json({
     status: "success",

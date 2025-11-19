@@ -13,7 +13,6 @@ import verifyToken from "../middlewares/verifyToken.js";
 
 const pagesRoute = express.Router();
 
-// Create page with file uploads
 pagesRoute.post(
   "/",
   verifyToken,

@@ -1,29 +1,29 @@
 import prisma from "../config/prismaClient.js";
 import AppError from "../utils/AppError.js";
 import httpStatusText from "../utils/httpStatusText.js";
-import path from "path";
-import fs from "fs";
+import { deleteFileFromS3 } from "../config/multerS3.js";
 
-export const createDog = async (data, files = []) => {
-  const createData = {
-    ...data,
-  };
-
-  // Add media relation if files exist
-  if (files.length > 0) {
-    createData.media = {
-      create: files.map((file) => ({
-        fileUrl: `/uploads/${file.filename}`,
-        fileName: file.originalname,
-        mimeType: file.mimetype,
-        fileSize: file.size,
-        uploadedBy: data.userId ?? null,
-      })),
-    };
-  }
+export const createDog = async (data) => {
+  let { media, ...dogData } = data;
 
   const dog = await prisma.dog.create({
-    data: createData,
+    data: {
+      ...dogData,
+      ...(Array.isArray(media) && media.length > 0
+        ? {
+            media: {
+              create: media.map((file) => ({
+                fileUrl: file.fileUrl,
+                fileName: file.fileName,
+                mimeType: file.mimeType,
+                fileSize: file.fileSize,
+                key: file.key,
+                bucket: file.bucket,
+              })),
+            },
+          }
+        : {}),
+    },
     include: {
       media: {
         select: {
@@ -40,6 +40,7 @@ export const createDog = async (data, files = []) => {
   if (!dog) {
     throw new AppError("Dog not created", 400, httpStatusText.BAD_REQUEST);
   }
+
   return dog;
 };
 
@@ -95,53 +96,39 @@ export const getDogById = async (id) => {
 };
 
 export const updateDog = async (id, data) => {
-  // Remove mediaFiles from data before updating the dog
-  const { mediaFiles, ...dogData } = data;
-
+  const { media, ...dogData } = data;
+  console.log(media);
   const updatedDog = await prisma.dog.update({
     where: { id },
-    data: dogData, // Use dogData without mediaFiles
+    data: dogData,
   });
 
   if (!updatedDog) {
     throw new AppError("Dog not found", 404, httpStatusText.NOT_FOUND);
   }
 
-  if (mediaFiles && mediaFiles.length > 0) {
+  if (Array.isArray(media) && media.length > 0) {
     await Promise.all(
-      mediaFiles.map(async (file) => {
-        const fileName = file.originalname.split("_")[1];
-        const mediaId = file.originalname.split("_")[0];
+      media.map(async (file) => {
+        const fileName = file.fileName.split("_")[1];
+        const mediaId = file.fileName.split("_")[0];
 
         if (mediaId && !isNaN(mediaId)) {
           // Update existing media
           const oldMedia = await prisma.media.findUnique({
             where: { id: Number(mediaId) },
-            select: { fileUrl: true },
+            select: { key: true },
           });
 
           const updatedMedia = await prisma.media.update({
             // Added await
             where: { id: Number(mediaId) },
-            data: {
-              fileUrl: `/uploads/${file.filename}`,
-              fileName: file.originalname,
-              mimeType: file.mimetype,
-              fileSize: file.size,
-            },
+            data: file,
           });
 
           // Delete old file
-          if (oldMedia?.fileUrl) {
-            const oldFilePath = path.join(
-              process.cwd(),
-              oldMedia.fileUrl.replace(/^\//, "")
-            );
-            fs.unlink(oldFilePath, (err) => {
-              if (err) {
-                console.error("Failed to delete old media file:", err);
-              }
-            });
+          if (oldMedia?.key) {
+            await deleteFileFromS3(oldMedia?.key);
           }
 
           return updatedMedia;
@@ -150,11 +137,7 @@ export const updateDog = async (id, data) => {
           return prisma.media.create({
             data: {
               dogId: id, // Changed from sectionId to dogId
-              fileUrl: `/uploads/${file.filename}`,
-              fileName: file.originalname,
-              mimeType: file.mimetype,
-              fileSize: file.size,
-              uploadedBy: data.userId ?? null,
+              ...file,
             },
           });
         }

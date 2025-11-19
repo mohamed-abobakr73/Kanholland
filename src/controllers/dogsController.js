@@ -14,7 +14,17 @@ export const createDogHandler = asyncHandler(async (req, res) => {
 
   const mediaFiles = req.files?.media || [];
 
-  const dog = await createDog(data, mediaFiles);
+  if (Array.isArray(mediaFiles) && mediaFiles.length > 0) {
+    data.media = mediaFiles.map((file) => ({
+      fileUrl: file.location,
+      fileName: file.originalname,
+      mimeType: file.mimetype,
+      fileSize: file.size,
+      key: file.key,
+    }));
+  }
+
+  const dog = await createDog(data);
 
   res.status(201).json({ success: httpStatusText.SUCCESS, data: dog });
 });
@@ -42,7 +52,15 @@ export const updateDogHandler = asyncHandler(async (req, res) => {
 
   const mediaFiles = req.files?.media || [];
 
-  data.mediaFiles = mediaFiles;
+  if (Array.isArray(mediaFiles) && mediaFiles.length > 0) {
+    data.media = mediaFiles.map((file) => ({
+      fileUrl: file.location,
+      fileName: file.originalname,
+      mimeType: file.mimetype,
+      fileSize: file.size,
+      key: file.key,
+    }));
+  }
 
   const dog = await updateDog(Number(req.params.id), data);
   res.json({ success: httpStatusText.SUCCESS, data: dog });
